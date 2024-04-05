@@ -1,0 +1,113 @@
+close all;
+clear 
+clc
+fig = figure;
+set(fig, 'DefaultAxesFontSize', 35);
+set(fig, 'DefaultAxesFontWeight', 'bold');
+set(fig, 'PaperSize', [16 12]);
+% six times per hour
+% payload length 10 
+total=2200*3600;payload=1;
+airtime(1,:)=[61.7,113.2,205.8,370.7,823.3,1482.8];
+airtime(2,:)=[61.7,113.2,205.8,411.6,823.3,1482.8];
+airtime(3,:)=[66.8,123.4,226.3,411.6,823.3,1646.6];
+airtime(4,:)=[66.8,123.4,226.3,411.6,905.2,1646.6];
+airtime(5,:)=[71.9,133.6,246.8,452.6,905.2,1810.4];
+airtime(6,:)=[71.9,133.6,246.8,452.6,987.1,1810.4];
+airtime(7,:)=[71.9,133.6,246.8,452.6,987.1,1810.4];
+for payload = 1 : 5
+p0 = 1.7*3.7+120.7*airtime(payload,6)/1000+(600-1.7-airtime(payload,6)/1000)*0.287;
+year0(payload)=(total/p0)/(2*24*365);
+data_path = ["D:\Morph_Encoder\Battery\U1\G1\"];
+track1 = dir(fullfile(data_path));
+snr=zeros(1,1);p1=0;count=0;p2=0;
+for i = 3 : 18
+    tab = readtable(['D:\Morph_Encoder\Battery\U1\G1\',track1(i).name]);
+    snr=table2array(tab(:,'SNR'));
+    for j = 1 : length(snr)
+%         if snr(j) > -5
+%             continue;
+%         end
+        if snr(j) >= -8.9
+            p1=p1+power(airtime(payload,1));
+        elseif snr(j) < -8.9 && snr(j) >= -11.9
+            p1=p1+power(airtime(payload,2));
+        elseif snr(j) < -11.9 && snr(j) >= -15
+            p1=p1+power(airtime(payload,3));
+        elseif snr(j) < -15 && snr(j) >= -17.5
+            p1=p1+power(airtime(payload,4));
+        elseif snr(j) < -17.5 && snr(j) >= -21.6
+            p1=p1+power(airtime(payload,5));
+        elseif snr(j) < -21.6
+            p1=p1+power(airtime(payload,6));
+        end
+        if snr(j) >= -6.2
+            p2=p2+power(airtime(payload,1));
+        elseif snr(j) < -6.2 && snr(j) >= -9.8
+            p2=p2+power(airtime(payload,2));
+        elseif snr(j) < -9.8 && snr(j) >= -12.8
+            p2=p2+power(airtime(payload,3));
+        elseif snr(j) < -12.8 && snr(j) >= -15.6
+            p2=p2+power(airtime(payload,4));
+        elseif snr(j) < -15.6 && snr(j) >= -18.2
+            p2=p2+power(airtime(payload,5));
+        elseif snr(j) < -18.2
+            p2=p2+power(airtime(payload,6));
+        end
+    end
+    count=count+length(snr);
+end
+data_path = ["D:\Morph_Encoder\Battery\U1\G2\"];
+track1 = dir(fullfile(data_path));
+for i = 3 : 13
+    tab = readtable(['D:\Morph_Encoder\Battery\U1\G2\',track1(i).name]);
+    snr=table2array(tab(:,'SNR'));
+    for j = 1 : length(snr)
+%         if snr(j) > -5
+%             continue;
+%         end
+        if snr(j) >= -8.9
+            p1=p1+power(airtime(payload,1));
+        elseif snr(j) < -8.9 && snr(j) >= -11.9
+            p1=p1+power(airtime(payload,2));
+        elseif snr(j) < -11.9 && snr(j) >= -15
+            p1=p1+power(airtime(payload,3));
+        elseif snr(j) < -15 && snr(j) >= -17.5
+            p1=p1+power(airtime(payload,4));
+        elseif snr(j) < -17.5 && snr(j) >= -21.6
+            p1=p1+power(airtime(payload,5));
+        elseif snr(j) < -21.6
+            p1=p1+power(airtime(payload,6));
+        end
+        if snr(j) >= -6.2
+            p2=p2+power(airtime(payload,1));
+        elseif snr(j) < -6.2 && snr(j) >= -9.8
+            p2=p2+power(airtime(payload,2));
+        elseif snr(j) < -9.8 && snr(j) >= -12.8
+            p2=p2+power(airtime(payload,3));
+        elseif snr(j) < -12.8 && snr(j) >= -15.6
+            p2=p2+power(airtime(payload,4));
+        elseif snr(j) < -15.6 && snr(j) >= -18.2
+            p2=p2+power(airtime(payload,5));
+        elseif snr(j) < -18.2
+            p2=p2+power(airtime(payload,6));
+        end
+    end
+    count=count+length(snr);
+end
+p1=p1/count;p2=p2/count;
+year1(payload)=(total/p1)/(2*24*365);year2(payload)=(total/p2)/(2*24*365);
+end
+plot(year0,'-o','MarkerSize',10,'LineWidth',5);hold on;
+plot(year1,'-o','MarkerSize',10,'LineWidth',5);hold on;
+plot(year2,'-o','MarkerSize',10,'LineWidth',5);
+xlabel('Payload Size (bytes)');grid on;
+set(gca, 'xtick', 1:5);axis([1 5 0 3]);
+xticklabels({'10','12','14','16','18'});
+ylabel('Battery Life (year)');
+legend('LoRaWAN','ChirpTransformer','LoRaWAN Rate Adapatation','Location','North','NumColumns',3,'FontSize', 20)
+set(gca,'gridlinestyle','-','Gridalpha',0.5);
+set(gcf, 'WindowStyle', 'normal', 'Position', [0, 0, 720*2, 480*2]);
+function [answer]=power(airtime_index)
+    answer=1.7*3.7+120.7*airtime_index/1000+(600-1.7-airtime_index/1000)*0.287;
+end
